@@ -1,11 +1,18 @@
 // import * as React from 'react';
 import axios from 'axios'
 import { store } from '@/store'
-import { Snackbar, Alert } from '@mui/material'
+import { setAccessToken } from '@/store/user/userSlice'
+import { customNavigate } from '@/App.tsx'
 
 axios.defaults.headers[ 'Content-Type' ] = 'application/json'
 
 const BASEURL = import.meta.env.VITE_BASE_URL
+
+// 定义白名单路径
+const whiteList = [
+  '/api/v1/login',
+  '/api/v1/getVerifyCode'
+]
 
 // 创建axios实例
 const service = axios.create({
@@ -16,11 +23,12 @@ const service = axios.create({
 // 请求拦截器
 service.interceptors.request.use(
   config => {
-    // 从store中获取token
-    const accessToken = store.getState().user.accessToken
-    console.log('accessToken', accessToken)
-    if (accessToken) {
-      config.headers[ 'Authorization' ] = `Bearer ${accessToken}`
+    // 白名单中的请求不添加 token
+    if (!whiteList.includes(config.url)) {
+      const accessToken = store.getState().user.accessToken
+      if (accessToken) {
+        config.headers[ 'Authorization' ] = `Bearer ${accessToken}`
+      }
     }
     return config
   },
@@ -32,6 +40,7 @@ service.interceptors.request.use(
 // 响应拦截器
 service.interceptors.response.use(
   response => {
+    // console.log('response', response.headers[ 'set-cookie' ])
     if (response.data.code === 403) {
       // 使用 MUI 的 Snackbar 显示错误信息
       store.dispatch({
@@ -46,9 +55,11 @@ service.interceptors.response.use(
     return response.data
   },
   error => {
-
-
-
+    if (error.status === 401) {
+      store.dispatch(setAccessToken(''))
+      // 使用路由跳转
+      customNavigate('/login')
+    }
 
     return Promise.reject(error)
   }
