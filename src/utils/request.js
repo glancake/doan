@@ -41,17 +41,27 @@ service.interceptors.request.use(
 service.interceptors.response.use(
   response => {
     // console.log('response', response.headers[ 'set-cookie' ])
-    if (response.data.code === 403) {
-      // 使用 MUI 的 Snackbar 显示错误信息
+    if (response.data.code !== 200) {
       store.dispatch({
         type: 'SHOW_SNACKBAR',
         payload: {
-          message: '权限不足，请联系管理员',
+          message: response.data.message,
           severity: 'error'
         }
       })
-      return Promise.reject(new Error('权限不足'))
+      if (response.data.code === 403) {
+        // 使用 MUI 的 Snackbar 显示错误信息
+        store.dispatch({
+          type: 'SHOW_SNACKBAR',
+          payload: {
+            message: '权限不足，请联系管理员',
+            severity: 'error'
+          }
+        })
+        return Promise.reject(new Error('权限不足'))
+      }
     }
+
     return response.data
   },
   error => {

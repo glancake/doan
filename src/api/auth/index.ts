@@ -7,6 +7,7 @@ const authApi = {
       url: '/api/v1/getVerifyCode',
       method: 'get',
       responseType: 'blob',
+      withCredentials: true,
     })
   },
 
