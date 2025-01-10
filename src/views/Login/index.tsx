@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppDispatch } from '@/store/hook'
-import { setAccessToken } from '@/store/user/userSlice'
-import { authApi } from '@/api'
+import { setAccessToken, setUserInfo } from '@/store/user/userSlice'
+import { authApi, userApi } from '@/api'
 import {
   TextField,
   Button,
@@ -37,6 +37,7 @@ const Login: React.FC = () => {
       const clientId: string = Cookies.get('client_id')
       console.log('clientId', clientId)
       setClientId(clientId)
+      // 生成图片url
       const imgUrl = window.URL.createObjectURL(res)
       setCaptchaImg(imgUrl)
     } catch (error) {
@@ -81,6 +82,10 @@ const Login: React.FC = () => {
       if (res.code === 200) {
         dispatch(setAccessToken(res.data.access_token))
         setOpenSnackbar(true)
+        const userRes = await userApi.getUserInfo()
+        if (userRes.code === 200) {
+          dispatch(setUserInfo(userRes.data))
+        }
         setTimeout(() => {
           navigate('/home')
         }, 1500)

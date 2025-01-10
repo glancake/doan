@@ -1,8 +1,8 @@
 import request from '@/utils/request'
-
+import { ApiResponse } from '../../types'
 const authApi = {
   // 获取验证码图片
-  getCaptcha() {
+  getCaptcha(): Promise<Blob> {
     return request({
       url: '/api/v1/getVerifyCode',
       method: 'get',
@@ -11,7 +11,7 @@ const authApi = {
     })
   },
 
-  login: (credentials) => request.post('/api/v1/login', credentials),
+  login: (credentials): Promise<ApiResponse<any>> => request.post('/api/v1/login', credentials),
 }
 
 export default authApi

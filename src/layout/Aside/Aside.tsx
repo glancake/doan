@@ -1,60 +1,32 @@
-import { useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
-import {
-  Drawer,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  ListItemButton,
-  Box,
-  Typography,
-  Divider
-} from '@mui/material'
-import {
-  Home as HomeIcon,
-  Message as MessageIcon,
-  Compare as CompareIcon,
-} from '@mui/icons-material'
-import './Aside.scss'
-
-const menuItems = [
-  { path: '/home', label: '首页', icon: <HomeIcon /> },
-  { path: '/message-list', label: '消息列表', icon: <MessageIcon /> },
-  { path: '/vs', label: '对比', icon: <CompareIcon /> },
-]
+import { List, ListItem, ListItemButton, ListItemIcon, ListItemText, Divider } from '@mui/material'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { navigation } from '../index'
 
 const Aside: React.FC = () => {
-  const navigate = useNavigate()
   const location = useLocation()
-  
+  const navigate = useNavigate()
+
   return (
-    <Drawer
-      variant="permanent"
-      className="aside"
-      classes={{
-        paper: 'aside-paper'
-      }}
-    >
-      <Box className="logo-container">
-        <img src="/logo.svg" alt="Logo" height="32" />
-      </Box>
-      <Divider />
-      <List component="nav">
-        {menuItems.map((item) => (
-          <ListItem key={item.path} disablePadding>
+    <List>
+      {navigation.map((item, index) => {
+        if (item.kind === 'divider') {
+          return <Divider key={`divider-${index}`} />
+        }
+
+        return (
+          <ListItem key={item.segment} disablePadding>
             <ListItemButton
-              selected={location.pathname === item.path}
-              onClick={() => navigate(item.path)}
+              selected={location.pathname.includes(item.segment)}
+              onClick={() => navigate(`/${item.segment}`)}
             >
               <ListItemIcon>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.label} />
+              <ListItemText primary={item.title} />
             </ListItemButton>
           </ListItem>
-        ))}
-      </List>
-    </Drawer>
+        )
+      })}
+    </List>
   )
 }
 
-export default Aside 
+export default Aside
