@@ -9,6 +9,7 @@ interface UserInfo {
 
 export interface UserState {
   accessToken: string,
+  refreshToken: string,
   clientId: string,
   userInfo: UserInfo
 }
@@ -16,6 +17,7 @@ export interface UserState {
 // 定义state初始值
 const initialState: UserState = {
   accessToken: '',
+  refreshToken: '',
   clientId: '',
   userInfo: null
 }
@@ -29,6 +31,9 @@ export const userSlice = createSlice({
     setAccessToken: (state, action: PayloadAction<string>) => {
       state.accessToken = action.payload
     },
+    setRefreshToken: (state, action: PayloadAction<string>) => {
+      state.refreshToken = action.payload
+    },
     setClientId: (state, action: PayloadAction<string>) => {
       state.clientId = action.payload
     },
@@ -39,11 +44,12 @@ export const userSlice = createSlice({
 })
 
 // 导出action
-export const { setAccessToken, setClientId, setUserInfo } = userSlice.actions
+export const { setAccessToken, setRefreshToken, setClientId, setUserInfo } = userSlice.actions
 
 
 // 导出selector
 export const getAccessToken = (state: RootState) => state.user.accessToken
+export const getRefreshToken = (state: RootState) => state.user.refreshToken
 export const getClientId = (state: RootState) => state.user.clientId
 export const getUserInfo = (state: RootState) => state.user.userInfo
 export default userSlice.reducer

@@ -1,7 +1,12 @@
 import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios'
 import { store } from '../store'
-import { setAccessToken } from '../store/user/userSlice'
+import { setAccessToken, setRefreshToken } from '../store/user/userSlice'
 import { customNavigate } from '../App'
+import { authApi } from '@/api'
+
+// Request Queue
+let isRefreshing = false;
+let requestQueue: any[] = [];
 
 // 类型定义
 interface ApiResponse<T = any> {
@@ -37,8 +42,8 @@ const service = axios.create({
   headers: {
     'Content-Type': CONTENT_TYPE
   },
-  retry: RETRY_COUNT,
-  retryDelay: RETRY_DELAY
+  // retry: RETRY_COUNT,
+  // retryDelay: RETRY_DELAY
 })
 
 // 重试拦截器
@@ -77,15 +82,15 @@ service.interceptors.request.use(
   config => {
     // 白名单中的请求不添加 token
     if (config.url && !WHITE_LIST.includes(config.url as typeof WHITE_LIST[number])) {
-      const accessToken = store.getState().user.accessToken
+      const accessToken = store.getState().user.accessToken;
       if (accessToken) {
-        config.headers['Authorization'] = `Bearer ${accessToken}`
+        config.headers['Authorization'] = `Bearer ${accessToken}`;
       }
     }
-    return config
+    return config;
   },
   error => {
-    return Promise.reject(error)
+    return Promise.reject(error);
   }
 )
 
@@ -112,17 +117,45 @@ service.interceptors.response.use(
         })
         return Promise.reject(new Error('权限不足'))
       }
+      if (response.data.code === 4006) {
+        console.log('token过期了');
+        // Add the request to the queue
+        requestQueue.push(response.config);
+
+        if (!isRefreshing) {
+          isRefreshing = true;
+          store.dispatch(setAccessToken(''))
+          authApi.refreshToken().then(res => {
+            if (res.code === 200) {
+              store.dispatch(setAccessToken(res.data.access_token))
+              store.dispatch(setRefreshToken(res.data.refresh_token))
+              // Retry all queued requests
+              requestQueue.forEach((req) => {
+                service(req);
+              });
+              requestQueue = []; // Clear the queue
+            }
+          }).catch(err => {
+            store.dispatch(setAccessToken(''))
+            // 使用路由跳转
+            customNavigate('/login')
+          }).finally(() => {
+            isRefreshing = false;
+          });
+        }
+      }
     }
 
     return response.data
   },
   error => {
-    if (error.status === 401) {
-      store.dispatch(setAccessToken(''))
-      // 使用路由跳转
-      customNavigate('/login')
-    }
-
+    store.dispatch({
+      type: 'SHOW_SNACKBAR',
+      payload: {
+        message: '系统异常',
+        severity: 'error'
+      }
+    })
     return Promise.reject(error)
   }
 )

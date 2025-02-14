@@ -7,7 +7,7 @@ import './index.scss'
 
 export const navigation = [
   {
-    segment: 'home',
+    segment: '',
     title: '首页',
     icon: <DescriptionIcon />,
   },
